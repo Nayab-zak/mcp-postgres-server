@@ -51,6 +51,8 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that p
 
 ### Claude Desktop
 
+#### Linux/macOS
+
 1. Copy the configuration from `claude_desktop_config.json`
 2. Add it to your Claude Desktop config file (`~/.config/claude/claude_desktop_config.json`)
 3. Update the path in the config to point to your `run_mcp.sh` script:
@@ -65,11 +67,35 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that p
 }
 ```
 
+#### Windows
+
+1. Copy the configuration from `claude_desktop_config.json`
+2. Add it to your Claude Desktop config file (`%APPDATA%\Claude\claude_desktop_config.json`)
+3. Update the path in the config to point to your `run_mcp.bat` script:
+
+```json
+{
+  "mcpServers": {
+    "postgres-mcp": {
+      "command": "C:\\full\\path\\to\\your\\mcp-postgres-server\\run_mcp.bat"
+    }
+  }
+}
+```
+
 ### Zed Editor
+
+#### Linux/macOS
 
 1. Copy the configuration from `zed_settings.json`
 2. Add it to your Zed settings (`~/.config/zed/settings.json`)
 3. Update the path to point to your `run_mcp.sh` script
+
+#### Windows
+
+1. Copy the configuration from `zed_settings.json`
+2. Add it to your Zed settings (`%APPDATA%\Zed\settings.json`)
+3. Update the path to point to your `run_mcp.bat` script
 
 ## Available Tools
 
@@ -98,8 +124,12 @@ uv run python test_connection.py
 # Run MCP server directly
 uv run python main.py
 
-# Or use the wrapper script
+# Use the wrapper script
+# Linux/macOS:
 ./run_mcp.sh
+
+# Windows:
+run_mcp.bat
 ```
 
 ## Project Structure
@@ -110,7 +140,8 @@ mcp-postgres-server/
 ├── config.py                   # Configuration and logging
 ├── servers/
 │   └── postgres_server.py     # MCP server implementation
-├── run_mcp.sh                 # Wrapper script for editors
+├── run_mcp.sh                 # Wrapper script for editors (Linux/macOS)
+├── run_mcp.bat                # Wrapper script for editors (Windows)
 ├── setup_mcp.sh               # Setup and testing script
 ├── test_connection.py         # Database connection test
 ├── claude_desktop_config.json # Claude Desktop config template
@@ -142,8 +173,8 @@ mcp-postgres-server/
    ```
 
 3. **Editor integration issues**:
-   - Ensure full path to `run_mcp.sh` in editor config
-   - Check that the script is executable: `chmod +x run_mcp.sh`
+   - **Linux/macOS**: Ensure full path to `run_mcp.sh` in editor config and make it executable: `chmod +x run_mcp.sh`
+   - **Windows**: Ensure full path to `run_mcp.bat` in editor config with proper backslashes
    - Restart your editor after configuration changes
 
 ## Security Notes
