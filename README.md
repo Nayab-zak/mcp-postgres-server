@@ -115,6 +115,36 @@ Once connected to Claude Desktop or Zed:
 - **"Count how many records are in each table"** - Get table sizes
 - **"Describe the structure of the orders table"** - Inspect schema
 
+## How It Works - Automatic Server Management
+
+The MCP server automatically starts and stops as needed. Here's the typical flow:
+
+### Example Flow:
+```
+You: "Show me all tables in my database"
+       ↓
+Claude Desktop checks: "Need postgres-mcp server"
+       ↓
+Automatically runs: run_mcp.bat → uv run python main.py
+       ↓
+Server starts, connects to DB, executes query
+       ↓
+Returns table list to Claude
+       ↓
+Claude shows you the results
+```
+
+### Automatic Behavior:
+- **🔴 When you close Claude Desktop**: Server automatically STOPS (no resources consumed)
+- **🚀 When you ask database questions**: Server automatically STARTS and connects
+- **💡 You don't need to do anything**: Just ask your questions naturally!
+
+### Benefits:
+- 🔋 **Resource Efficient**: Server only runs when needed
+- 🚀 **Always Fresh**: Each session starts with a clean server
+- 🛡️ **Secure**: No persistent connections left open
+- 🔄 **Reliable**: Auto-restart if anything goes wrong
+
 ## Manual Testing
 
 ```bash
