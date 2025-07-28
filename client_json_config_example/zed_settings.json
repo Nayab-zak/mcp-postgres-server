@@ -1,0 +1,7 @@
+{
+  "context_servers": {
+    "postgres-mcp": {
+      "command": "/path/to/your/mcp_server/run_mcp.sh"
+    }
+  }
+}
