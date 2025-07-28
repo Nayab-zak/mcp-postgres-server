@@ -1,4 +1,7 @@
 from servers.postgres_server import mcp
+import setproctitle
+
+setproctitle.setproctitle("PostgresMCPServer")
 
 def main():
     """
