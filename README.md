@@ -1,11 +1,31 @@
-# PostgreSQL MCP Server
+# PostgreSQL & Vertica MCP Server
 
-A professional [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for secure PostgreSQL access from AI tools like Claude Desktop and Zed Editor.
+A professional [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server providing## 🧩 Project Structure
+```
+mcp-postgres-server/
+├── postgres_main.py               # PostgreSQL server entry point
+├── vertica_main.py                # Vertica server entry point
+├── config.py                      # Configuration and logging
+├── servers/
+│   ├── postgres_server.py         # PostgreSQL MCP server implementation
+│   └── vertica_server.py          # Vertica MCP server implementation
+├── run_postgres_mcp.sh / run_postgres_mcp.bat  # PostgreSQL wrapper scripts
+├── run_vertica_mcp.sh / run_vertica_mcp.bat    # Vertica wrapper scripts
+├── setup_mcp.sh                   # Setup and testing script
+├── test_connection.py             # PostgreSQL connection test
+├── test_vertica_connection.py     # Vertica connection test
+├── client_json_config_example/    # Editor config templates for both servers
+├── .env.example                   # Environment template
+└── README.md                      # This file
+```se access from AI tools like Claude Desktop and Zed Editor.
+
+**Supports:** PostgreSQL and Vertica databases
 
 ---
 
 ## 🚀 Features
-- **Direct PostgreSQL Access:** Securely run SQL queries from AI assistants
+- **Dual Database Support:** PostgreSQL and Vertica database access
+- **Direct Database Access:** Securely run SQL queries from AI assistants
 - **Easy Integration:** Works out-of-the-box with Claude Desktop and Zed Editor
 - **Cross-Platform:** Supports Linux, macOS, and Windows
 - **Automatic Lifecycle:** Server starts/stops automatically with your editor
@@ -17,7 +37,7 @@ A professional [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 
 
 ### 1. Prerequisites
 - Python 3.13+
-- PostgreSQL database
+- PostgreSQL or Vertica database (or both)
 - [`uv`](https://docs.astral.sh/uv/) package manager
 
 ### 2. Installation
@@ -29,45 +49,81 @@ cp .env.example .env  # Edit .env with your DB details
 ```
 
 ### 3. Configuration
-- Edit `.env` with your PostgreSQL connection string:
-  ```env
-  DB_URL=postgresql://username:password@localhost:5432/database_name
-  ```
-- For Claude Desktop/Zed Editor, see `client_json_config_example/` for ready-to-use config templates.
+Edit `.env` with your database connection strings:
 
-### 4. Run the Server
-- **Linux/macOS:**
-  ```bash
-  ./run_mcp.sh
-  ```
-- **Windows:**
-  ```bat
-  run_mcp.bat
-  ```
-- Or let Claude Desktop/Zed Editor start the server automatically when you ask a database question.
+**For PostgreSQL:**
+```env
+DB_URL=postgresql://username:password@localhost:5432/database_name
+```
+
+**For Vertica:**
+```env
+VERTICA_HOST=localhost
+VERTICA_PORT=5433
+VERTICA_DB=VMart
+VERTICA_USER=dbadmin
+VERTICA_PASSWORD=your_password
+```
+
+For Claude Desktop/Zed Editor, see `client_json_config_example/` for ready-to-use config templates:
+- `claude_desktop_config.json` - PostgreSQL only
+- `vertica_claude_desktop_config.json` - Vertica only  
+- `combined_claude_desktop_config.json` - Both servers
+- `zed_settings.json` - PostgreSQL only for Zed
+- `vertica_zed_settings.json` - Vertica only for Zed
+- `combined_zed_settings.json` - Both servers for Zed
+
+### 4. Run the Servers
+
+**PostgreSQL Server:**
+- **Linux/macOS:** `./run_postgres_mcp.sh`
+- **Windows:** `run_postgres_mcp.bat`
+
+**Vertica Server:**
+- **Linux/macOS:** `./run_vertica_mcp.sh`  
+- **Windows:** `run_vertica_mcp.bat`
+
+Or let Claude Desktop/Zed Editor start the servers automatically when you ask database questions.
 
 ---
 
-## 🖥️ How to Check if the Server is Running
+## 🖥️ How to Check if Servers are Running
+
+**PostgreSQL Server:**
 - **Linux/macOS:**
   ```bash
   ps aux | grep PostgresMCPServer
   # or
-  ps aux | grep "python main.py"
+  ps aux | grep "python postgres_main.py"
   ```
 - **Windows:**
   ```bat
   tasklist | findstr PostgresMCPServer
   tasklist | findstr python
   ```
-- If you only see the `grep`/`findstr` line, the server is not running.
+
+**Vertica Server:**
+- **Linux/macOS:**
+  ```bash
+  ps aux | grep VerticaMCPServer
+  # or
+  ps aux | grep "python vertica_main.py"
+  ```
+- **Windows:**
+  ```bat
+  tasklist | findstr VerticaMCPServer
+  tasklist | findstr python
+  ```
+
+If you only see the `grep`/`findstr` line, the server is not running.
 
 ---
 
 ## 🔄 Server Lifecycle
-- **Automatic:** The server starts/stops automatically with Claude Desktop or Zed Editor.
-- **Manual:** You can start/stop it from the terminal for testing.
-- **No need to restart manually** during normal use—the editor manages it for you.
+- **Automatic:** Servers start/stop automatically with Claude Desktop or Zed Editor.
+- **Manual:** You can start/stop them from the terminal for testing.
+- **No need to restart manually** during normal use—the editor manages them for you.
+- **Multiple servers:** You can run both PostgreSQL and Vertica servers simultaneously.
 
 ---
 
@@ -81,9 +137,17 @@ cp .env.example .env  # Edit .env with your DB details
 ---
 
 ## 🧑‍💻 Manual Testing
+
+**PostgreSQL:**
 ```bash
-uv run python test_connection.py  # Test DB connection
-uv run python main.py             # Run server directly
+uv run python test_connection.py      # Test PostgreSQL connection
+uv run python postgres_main.py        # Run PostgreSQL server directly
+```
+
+**Vertica:**
+```bash
+uv run python test_vertica_connection.py  # Test Vertica connection
+uv run python vertica_main.py             # Run Vertica server directly
 ```
 
 ---
@@ -106,16 +170,22 @@ mcp-postgres-server/
 ---
 
 ## 🛟 Troubleshooting
-- **Connection failed?**
-  - Check PostgreSQL is running: `pg_isready -h localhost -p 5432`
-  - Verify credentials in `.env`
-- **Server won't start?**
-  - Test DB connection: `uv run python test_connection.py`
-  - Check logs: `tail -f logs/app.log`
-- **Editor integration issues?**
-  - Linux/macOS: Ensure full path to `run_mcp.sh` in editor config and make it executable: `chmod +x run_mcp.sh`
-  - Windows: Ensure full path to `run_mcp.bat` in editor config with proper backslashes
-  - Restart your editor after config changes
+
+**Connection failed?**
+- **PostgreSQL:** Check if PostgreSQL is running: `pg_isready -h localhost -p 5432`
+- **Vertica:** Check if Vertica is running and accessible on the configured port
+- Verify credentials in `.env`
+
+**Server won't start?**
+- **PostgreSQL:** Test connection: `uv run python test_connection.py`
+- **Vertica:** Test connection: `uv run python test_vertica_connection.py`
+- Check logs: `tail -f logs/app.log`
+
+**Editor integration issues?**
+- Linux/macOS: Ensure full path to wrapper scripts in editor config and make them executable
+- Windows: Ensure full path to `.bat` scripts in editor config with proper backslashes
+- Use the appropriate config templates in `client_json_config_example/`
+- Restart your editor after config changes
 
 ---
 

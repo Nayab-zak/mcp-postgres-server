@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vertica-mcp": {
+      "command": "/full/path/to/your/mcp-server/run_vertica_mcp.sh"
+    }
+  }
+}

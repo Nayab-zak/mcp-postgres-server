@@ -1,0 +1,13 @@
+{
+  "context_servers": [
+    {
+      "type": "mcp",
+      "id": "vertica-mcp",
+      "name": "Vertica Database Server",
+      "command": {
+        "command": "/full/path/to/your/mcp-postgres-server/run_vertica_mcp.sh",
+        "args": []
+      }
+    }
+  ]
+}

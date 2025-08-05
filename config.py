@@ -17,6 +17,17 @@ load_dotenv(env_path)
 
 # --- Application settings ---
 DB_URL = os.getenv("DB_URL")  # e.g. postgresql://user:pass@host:port/dbname
+
+# Vertica configuration
+VERTICA_HOST = os.getenv("VERTICA_HOST", "localhost")
+VERTICA_PORT = os.getenv("VERTICA_PORT", "5433")
+VERTICA_DB = os.getenv("VERTICA_DB", "VMart")
+VERTICA_USER = os.getenv("VERTICA_USER", "dbadmin")
+VERTICA_PASSWORD = os.getenv("VERTICA_PASSWORD", "")
+
+# Construct Vertica connection URL
+VERTICA_URL = f"vertica+vertica_python://{VERTICA_USER}:{VERTICA_PASSWORD}@{VERTICA_HOST}:{VERTICA_PORT}/{VERTICA_DB}"
+
 LOG_PATH = os.getenv(
     "LOG_PATH",
     os.path.join(os.path.dirname(__file__), "logs", "app.log")

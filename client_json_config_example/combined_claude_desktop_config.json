@@ -2,6 +2,9 @@
   "mcpServers": {
     "postgres-mcp": {
       "command": "/full/path/to/your/mcp-server/run_postgres_mcp.sh"
+    },
+    "vertica-mcp": {
+      "command": "/full/path/to/your/mcp-server/run_vertica_mcp.sh"
     }
   }
 }
