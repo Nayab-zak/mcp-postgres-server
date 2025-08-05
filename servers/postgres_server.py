@@ -172,3 +172,252 @@ def list_tables(schema: str = "advp") -> dict:
         }
         logger.error(f"Database connection test failed: {error_info}")
         return error_info
+
+@mcp.tool()
+def describe_table(table_name: str, schema: str = "advp") -> dict:
+    """
+    Get detailed information about a specific table including columns, types, and constraints.
+
+    Args:
+        table_name (str): The name of the table to describe. Required.
+        schema (str): The schema name. Defaults to 'advp'.
+
+    Returns:
+        dict: Detailed table information including columns, data types, constraints, and row count.
+    """
+    logger.info(f"Describing table: {schema}.{table_name}")
+    try:
+        with engine.connect() as conn:
+            # Get column information
+            columns_result = conn.execute(text("""
+                SELECT 
+                    column_name,
+                    data_type,
+                    is_nullable,
+                    column_default,
+                    character_maximum_length,
+                    numeric_precision,
+                    numeric_scale
+                FROM information_schema.columns 
+                WHERE table_schema = :schema AND table_name = :table_name
+                ORDER BY ordinal_position
+            """), {"schema": schema, "table_name": table_name})
+            
+            columns = [dict(row) for row in columns_result.mappings()]
+            
+            if not columns:
+                return {"error": f"Table '{schema}.{table_name}' not found"}
+            
+            # Get constraints (primary keys, foreign keys, etc.)
+            constraints_result = conn.execute(text("""
+                SELECT 
+                    tc.constraint_type,
+                    tc.constraint_name,
+                    kcu.column_name,
+                    ccu.table_name AS foreign_table_name,
+                    ccu.column_name AS foreign_column_name
+                FROM information_schema.table_constraints tc
+                LEFT JOIN information_schema.key_column_usage kcu 
+                    ON tc.constraint_name = kcu.constraint_name
+                LEFT JOIN information_schema.constraint_column_usage ccu 
+                    ON tc.constraint_name = ccu.constraint_name
+                WHERE tc.table_schema = :schema AND tc.table_name = :table_name
+            """), {"schema": schema, "table_name": table_name})
+            
+            constraints = [dict(row) for row in constraints_result.mappings()]
+            
+            # Get row count
+            try:
+                count_result = conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{table_name}"'))
+                row_count = count_result.scalar()
+            except:
+                row_count = 'N/A'
+            
+            # Get table size (if available)
+            try:
+                size_result = conn.execute(text("""
+                    SELECT pg_size_pretty(pg_total_relation_size(:full_table_name)) as table_size
+                """), {"full_table_name": f"{schema}.{table_name}"})
+                table_size = size_result.scalar()
+            except:
+                table_size = 'N/A'
+            
+            table_info = {
+                "schema": schema,
+                "table_name": table_name,
+                "row_count": row_count,
+                "table_size": table_size,
+                "columns": columns,
+                "constraints": constraints,
+                "summary": {
+                    "total_columns": len(columns),
+                    "nullable_columns": len([c for c in columns if c['is_nullable'] == 'YES']),
+                    "primary_keys": [c['column_name'] for c in constraints if c['constraint_type'] == 'PRIMARY KEY'],
+                    "foreign_keys": [c for c in constraints if c['constraint_type'] == 'FOREIGN KEY']
+                }
+            }
+            
+            logger.info(f"Successfully described table {schema}.{table_name}")
+            return table_info
+            
+    except Exception as exc:
+        error_msg = f"Failed to describe table '{schema}.{table_name}': {str(exc)}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+
+@mcp.tool()
+def get_schema_relationships(schema: str = "advp") -> dict:
+    """
+    Get foreign key relationships between tables in the schema.
+
+    Args:
+        schema (str): The schema name. Defaults to 'advp'.
+
+    Returns:
+        dict: Information about table relationships and suggested joins.
+    """
+    logger.info(f"Getting schema relationships for: {schema}")
+    try:
+        with engine.connect() as conn:
+            # Get foreign key relationships
+            fk_result = conn.execute(text("""
+                SELECT 
+                    tc.table_name as source_table,
+                    kcu.column_name as source_column,
+                    ccu.table_name as target_table,
+                    ccu.column_name as target_column,
+                    tc.constraint_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu 
+                    ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage ccu 
+                    ON tc.constraint_name = ccu.constraint_name
+                WHERE tc.constraint_type = 'FOREIGN KEY' 
+                    AND tc.table_schema = :schema
+                ORDER BY tc.table_name, kcu.column_name
+            """), {"schema": schema})
+            
+            relationships = [dict(row) for row in fk_result.mappings()]
+            
+            # Create suggested JOIN patterns
+            join_suggestions = []
+            for rel in relationships:
+                join_pattern = f"""
+-- Join {rel['source_table']} with {rel['target_table']}
+SELECT * FROM "{schema}"."{rel['source_table']}" s
+JOIN "{schema}"."{rel['target_table']}" t 
+    ON s."{rel['source_column']}" = t."{rel['target_column']}"
+                """.strip()
+                join_suggestions.append({
+                    "description": f"Join {rel['source_table']} → {rel['target_table']}",
+                    "sql_pattern": join_pattern,
+                    "relationship": rel
+                })
+            
+            return {
+                "schema": schema,
+                "relationships": relationships,
+                "join_suggestions": join_suggestions,
+                "summary": {
+                    "total_relationships": len(relationships),
+                    "connected_tables": len(set([r['source_table'] for r in relationships] + [r['target_table'] for r in relationships]))
+                }
+            }
+            
+    except Exception as exc:
+        error_msg = f"Failed to get schema relationships for '{schema}': {str(exc)}"
+        logger.error(error_msg)
+        return {"error": error_msg}
+
+@mcp.tool()
+def get_common_queries() -> dict:
+    """
+    Get common query patterns and examples for the PostgreSQL database.
+
+    Returns:
+        dict: Collection of useful query patterns and examples.
+    """
+    logger.info("Providing common query patterns")
+    
+    common_queries = {
+        "basic_exploration": [
+            {
+                "description": "List all tables with row counts",
+                "sql": """
+SELECT 
+    schemaname,
+    tablename,
+    n_tup_ins as total_inserts,
+    n_tup_upd as total_updates,
+    n_tup_del as total_deletes
+FROM pg_stat_user_tables 
+WHERE schemaname = 'advp'
+ORDER BY tablename;
+                """.strip()
+            },
+            {
+                "description": "Get table sizes",
+                "sql": """
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+FROM pg_tables 
+WHERE schemaname = 'advp'
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+                """.strip()
+            }
+        ],
+        "data_quality": [
+            {
+                "description": "Check for duplicate records (example)",
+                "sql": """
+-- Replace 'your_table' and 'key_column' with actual names
+SELECT key_column, COUNT(*) as duplicate_count
+FROM "advp"."your_table"
+GROUP BY key_column
+HAVING COUNT(*) > 1
+ORDER BY duplicate_count DESC;
+                """.strip()
+            },
+            {
+                "description": "Find null values in columns",
+                "sql": """
+-- Replace 'your_table' with actual table name
+SELECT 
+    COUNT(*) as total_rows,
+    COUNT(column1) as non_null_column1,
+    COUNT(column2) as non_null_column2
+FROM "advp"."your_table";
+                """.strip()
+            }
+        ],
+        "performance": [
+            {
+                "description": "Show table statistics",
+                "sql": """
+SELECT 
+    schemaname,
+    tablename,
+    attname as column_name,
+    n_distinct,
+    correlation
+FROM pg_stats 
+WHERE schemaname = 'advp'
+ORDER BY tablename, attname;
+                """.strip()
+            }
+        ]
+    }
+    
+    return {
+        "database_type": "PostgreSQL",
+        "default_schema": "advp",
+        "query_categories": common_queries,
+        "tips": [
+            "Always specify schema in queries: \"advp\".\"table_name\"",
+            "Use LIMIT when exploring large tables",
+            "Use EXPLAIN ANALYZE to understand query performance",
+            "Check pg_stat_user_tables for table usage statistics"
+        ]
+    }

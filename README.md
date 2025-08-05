@@ -128,11 +128,33 @@ If you only see the `grep`/`findstr` line, the server is not running.
 ---
 
 ## 🛠️ Available Tools
-| Tool             | Description                        | Example Usage                      |
-|------------------|------------------------------------|------------------------------------|
-| `test_connection`| Test DB connectivity               | "Test the database connection"     |
-| `query`          | Execute SQL queries                | "Show me the first 5 users"        |
-| `list_tables`    | List all tables with metadata      | "List all tables in the database"  |
+| Tool               | Description                        | Example Usage                          |
+|--------------------|------------------------------------|-----------------------------------------|
+| `test_connection`  | Test DB connectivity               | "Test the database connection"         |
+| `query`            | Execute SQL queries                | "Show me the first 5 users"            |
+| `list_tables`      | List all tables with metadata      | "List all tables in the database"      |
+| `describe_table`   | Get detailed table information     | "Describe the structure of users table"|
+| `get_schema_relationships` | Show table relationships and joins | "Show me how tables are related"   |
+| `get_common_queries` | Get query patterns and examples   | "Show me common query patterns"        |
+
+---
+
+## 🧠 **Smart Database Guidance**
+The MCP servers now include intelligent metadata tools that help LLMs understand your database structure and provide better assistance:
+
+### **Enhanced Schema Understanding:**
+- **`describe_table("users")`** - Get detailed column info, constraints, and relationships
+- **`get_schema_relationships()`** - Discover foreign keys and suggested JOIN patterns  
+- **`get_common_queries()`** - Database-specific query examples and optimization tips
+
+### **Database-Specific Intelligence:**
+- **PostgreSQL**: Includes pg_stats analysis, table sizes, and performance queries
+- **Vertica**: Covers projections, column storage, and analytics optimization patterns
+
+### **Example Interactions:**
+- *"Describe the users table structure"* → Detailed column info + constraints
+- *"How are the tables related?"* → FK relationships + suggested JOINs  
+- *"Show me optimization tips for this database"* → Database-specific best practices
 
 ---
 
