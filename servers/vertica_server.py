@@ -92,12 +92,12 @@ def query(sql: str = None) -> list[dict]:
         return [{"error": error_msg}]
 
 @mcp.tool()
-def list_tables(schema: str = "public") -> dict:
+def list_tables(schema: str = "DPW_DL") -> dict:
     """
     List all tables in the specified schema.
 
     Args:
-        schema (str): The schema name to list tables from. Defaults to 'public'.
+        schema (str): The schema name to list tables from. Defaults to 'DPW_DL'.
 
     Returns:
         dict: A dictionary containing table information and metadata.
@@ -171,8 +171,8 @@ def test_connection() -> dict:
             cursor.execute("SELECT current_user(), current_database(), version()")
             row = cursor.fetchone()
             
-            # Get table count from public schema
-            cursor.execute("SELECT COUNT(*) FROM v_catalog.tables WHERE table_schema = 'public'")
+            # Get table count from DPW_DL schema
+            cursor.execute("SELECT COUNT(*) FROM v_catalog.tables WHERE table_schema = 'DPW_DL'")
             table_count = cursor.fetchone()[0]
             
             info = {
@@ -196,13 +196,13 @@ def test_connection() -> dict:
         return error_info
 
 @mcp.tool()
-def describe_table(table_name: str, schema: str = "public") -> dict:
+def describe_table(table_name: str, schema: str = "DPW_DL") -> dict:
     """
     Get detailed information about a specific table including columns, types, and projections.
 
     Args:
         table_name (str): The name of the table to describe. Required.
-        schema (str): The schema name. Defaults to 'public'.
+        schema (str): The schema name. Defaults to 'DPW_DL'.
 
     Returns:
         dict: Detailed table information including columns, data types, projections, and row count.
@@ -318,12 +318,12 @@ def describe_table(table_name: str, schema: str = "public") -> dict:
         return {"error": error_msg}
 
 @mcp.tool()
-def get_schema_relationships(schema: str = "public") -> dict:
+def get_schema_relationships(schema: str = "DPW_DL") -> dict:
     """
     Get foreign key relationships and table dependencies in the Vertica schema.
 
     Args:
-        schema (str): The schema name. Defaults to 'public'.
+        schema (str): The schema name. Defaults to 'DPW_DL'.
 
     Returns:
         dict: Information about table relationships and suggested joins.
@@ -409,7 +409,7 @@ SELECT
     SUM(CASE WHEN p.is_super_projection THEN 1 ELSE 0 END) as super_projections
 FROM v_catalog.tables t
 LEFT JOIN v_catalog.projections p ON t.table_name = p.anchor_table_name
-WHERE t.table_schema = 'public'
+WHERE t.table_schema = 'DPW_DL'
 GROUP BY t.table_name
 ORDER BY t.table_name;
                 """.strip()
@@ -423,7 +423,7 @@ SELECT
     SUM(used_bytes) as total_bytes,
     SUM(row_count) as total_rows
 FROM v_monitor.storage_containers
-WHERE schema_name = 'public'
+WHERE schema_name = 'DPW_DL'
 GROUP BY schema_name, table_name
 ORDER BY total_bytes DESC;
                 """.strip()
@@ -454,7 +454,7 @@ SELECT
     used_count,
     last_used_time
 FROM v_monitor.projection_usage
-WHERE projection_schema = 'public'
+WHERE projection_schema = 'DPW_DL'
 ORDER BY used_count DESC;
                 """.strip()
             }
@@ -470,7 +470,7 @@ SELECT
     statistics_type,
     statistics_value
 FROM v_catalog.column_statistics
-WHERE schema_name = 'public'
+WHERE schema_name = 'DPW_DL'
 ORDER BY table_name, column_name;
                 """.strip()
             },
@@ -482,7 +482,7 @@ SELECT
     your_column,
     COUNT(*) as frequency,
     COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
-FROM "public"."your_table"
+FROM "DPW_DL"."your_table"
 GROUP BY your_column
 ORDER BY frequency DESC
 LIMIT 20;
@@ -493,7 +493,7 @@ LIMIT 20;
     
     return {
         "database_type": "Vertica",
-        "default_schema": "public",
+        "default_schema": "DPW_DL",
         "query_categories": common_queries,
         "vertica_specific_tips": [
             "Vertica is columnar - queries are optimized for analytics",
